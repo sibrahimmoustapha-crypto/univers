@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Culture Quiz - 200 Questions Pro</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg-gradient: linear-gradient(135deg, #0f172a, #1e293b);
+            --card-bg: rgba(30, 41, 59, 0.95);
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --correct: #22c55e;
+            --incorrect: #ef4444;
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .quiz-container {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            width: 100%;
+            max-width: 650px;
+            padding: 35px;
+            border-radius: 16px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-color);
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .title {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            text-align: center;
+            color: var(--primary);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+        }
+
+        .category-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .cat-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text);
+            padding: 20px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            text-align: center;
+        }
+
+        .cat-btn span {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: normal;
+        }
+
+        .cat-btn:hover {
+            background: rgba(99, 102, 241, 0.2);
+            border-color: var(--primary);
+            transform: translateY(-3px);
+        }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+        }
+
+        .badge {
+            background: var(--primary);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .question-number {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .score-tracker {
+            font-size: 0.95rem;
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        h2#question-text {
+            font-size: 1.25rem;
+            margin-bottom: 20px;
+            line-height: 1.5;
+            min-height: 60px;
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .option-btn {
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text);
+            border: 1px solid var(--border-color);
+            padding: 14px 18px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            background: rgba(99, 102, 241, 0.15);
+            border-color: var(--primary);
+        }
+
+        .option-btn.correct {
+            background-color: var(--correct) !important;
+            border-color: var(--correct);
+            color: white;
+        }
+
+        .option-btn.incorrect {
+            background-color: var(--incorrect) !important;
+            border-color: var(--incorrect);
+            color: white;
+        }
+
+        .action-btn {
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .action-btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .result-screen {
+            text-align: center;
+        }
+
+        .result-screen h2 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        .result-screen p {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 25px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="quiz-container">
+        <!-- ÉCRAN 1 : CHOIX DE LA CATÉGORIE -->
+        <div id="category-screen" class="screen active">
+            <h1 class="title">Grand Quiz - 200 Questions</h1>
+            <p class="subtitle">Sélectionnez un thème pour lancer une session de 20 questions aléatoires</p>
+            
+            <div class="category-grid">
+                <button class="cat-btn" onclick="startQuiz('general')">
+                    🌍 Culture Générale
+                    <span>50 questions dispo</span>
+                </button>
+                <button class="cat-btn" onclick="startQuiz('histoire')">
+                    🏛️ Histoire & Géo
+                    <span>50 questions dispo</span>
+                </button>
+                <button class="cat-btn" onclick="startQuiz('sciences')">
+                    🔬 Sciences & Nature
+                    <span>50 questions dispo</span>
+                </button>
+                <button class="cat-btn" onclick="startQuiz('divertissement')">
+                    🎬 Divertissement
+                    <span>50 questions dispo</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ÉCRAN 2 : JEU EN COURS -->
+        <div id="quiz-screen" class="screen">
+            <div class="quiz-header">
+                <span id="category-badge" class="badge">THÈME</span>
+                <span class="question-number" id="question-number">Question 1/20</span>
+                <span class="score-tracker" id="score-tracker">Score : 0</span>
+            </div>
+            
+            <h2 id="question-text">Chargement...</h2>
+            
+            <div class="options-list" id="options-list"></div>
+
+            <button class="action-btn" id="next-btn" style="display: none;">Question suivante</button>
+        </div>
+
+        <!-- ÉCRAN 3 : RÉSULTATS -->
+        <div id="result-screen" class="screen result-screen">
+            <h2>Session Terminée ! 🎉</h2>
+            <p id="final-score-text">Votre score : 0 sur 20</p>
+            
+            <div class="btn-group">
+                <button class="action-btn" onclick="showCategorySelect()">Changer de thème</button>
+                <button class="action-btn" style="background: rgba(255,255,255,0.1);" onclick="restartCategory()">Rejouer ce thème</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // BASE DE DONNÉES COMPLÈTE DE 200 QUESTIONS (50 par catégorie)
+        const database = {
+            general: [
+                { q: "Quel est le pays le plus vaste du monde ?", o: ["Russie", "Canada", "Chine", "États-Unis"], c: 0 },
+                { q: "Combien de continents compte-t-on sur Terre ?", o: ["5", "6", "7", "8"], c: 2 },
+                { q: "Quelle est la monnaie officielle du Japon ?", o: ["Yuan", "Yen", "Won", "Dollar"], c: 1 },
+                { q: "Quel est l'élément chimique dont le symbole est O ?", o: ["Or", "Oxygène", "Osmium", "Ozone"], c: 1 },
+                { q: "En quelle année a eu lieu la chute du mur de Berlin ?", o: ["1987", "1989", "1991", "1993"], c: 1 },
+                { q: "Quel animal est connu pour être le plus rapide terrestre ?", o: ["Le lion", "Le guépard", "L'antilope", "Le cheval"], c: 1 },
+                { q: "Quelle est la capitale de l'Italie ?", o: ["Milan", "Venise", "Rome", "Naples"], c: 2 },
+                { q: "Combien de joueurs composent une équipe de football sur le terrain ?", o: ["9", "10", "11", "12"], c: 2 },
+                { q: "Quel océan est le plus grand du monde ?", o: ["Océan Atlantique", "Océan Indien", "Océan Arctique", "Océan Pacifique"], c: 3 },
+                { q: "Quel est le métal précieux de couleur jaune le plus connu ?", o: ["Argent", "Or", "Platine", "Bronze"], c: 1 },
+                { q: "De quelle couleur est le drapeau des des Nations Unies ?", o: ["Rouge et blanc", "Bleu et blanc", "Vert et blanc", "Jaune et noir"], c: 1 },
+                { q: "Combien de côtés possède un hexagone ?", o: ["5", "6", "7", "8"], c: 1 },
+                { q: "Quel pays a la forme d'une botte ?", o: ["L'Espagne", "La Grèce", "L'Italie", "Le Portugal"], c: 2 },
+                { q: "Quelle est la langue la plus parlée au monde en nombre de locuteurs natifs ?", o: ["L'anglais", "Le mandarin", "L'espagnol", "L'hindi"], c: 1 },
+                { q: "Quel instrument de musique possède 88 touches ?", o: ["La guitare", "Le violon", "Le piano", "La harpe"], c: 2 },
+                { q: "Combien de jours compte une année bissextile ?", o: ["364", "365", "366", "367"], c: 2 },
+                { q: "Quel est le plus grand mammifère marin ?", o: ["Le requin blanc", "L'orque", "La baleine bleue", "Le cachalot"], c: 2 },
+                { q: "Quel est le symbole chimique de l'eau ?", o: ["CO2", "H2O", "O2", "NaCl"], c: 1 },
+                { q: "Dans quel pays se trouve la ville de Tُمْ", o: ["Maroc", "Égypte", "Tunisie", "Algérie"], c: 0 },
+                { q: "Quel est l'organe principal du système respiratoire humain ?", o: ["Le cœur", "Les poumons", "Le foie", "Les reins"], c: 1 },
+                { q: "Quelle est la capitale du Canada ?", o: ["Toronto", "Vancouver", "Ottawa", "Montréal"], c: 2 },
+                { q: "Quel compositeur est devenu sourd en fin de vie ?", o: ["Mozart", "Beethoven", "Bach", "Chopin"], c: 1 },
+                { q: "Combien de secondes y a-t-il dans une heure ?", o: ["3600", "1800", "7200", "600"], c: 0 },
+                { q: "Quel est le plus petit pays du monde ?", o: ["Monaco", "Liechtenstein", "Vatican", "San Marin"], c: 2 },
+                { q: "Quelle est la plus haute montagne du monde ?", o: ["Le K2", "Le Kilimandjaro", "L'Everest", "Le Mont Blanc"], c: 2 },
+                { q: "Quel gaz les plantes absorbent-elles principalement ?", o: ["Oxygène", "Azote", "Dioxyde de carbone", "Hélium"], c: 2 },
+                { q: "Quel est le prénom de l'inventeur de l'ampoule électrique Edison ?", o: ["Thomas", "Nikola", "Albert", "Benjamin"], c: 0 },
+                { q: "Combien de dents possède un adulte humain en général (avec les dents de sagesse) ?", o: ["28", "30", "32", "34"], c: 2 },
+                { q: "Quel pays produit le plus de café au monde ?", o: ["La Colombie", "Le Vietnam", "Le Brésil", "L'Éthiopie"], c: 2 },
+                { q: "Quelle est la capitale de l'Australie ?", o: ["Sydney", "Melbourne", "Canberra", "Brisbane"], c: 2 },
+                { q: "Quel est le fruit national de l'Inde ?", o: ["La banane", "La mangue", "La papaye", "L'ananas"], c: 1 },
+                { q: "Quel est le prénom du célèbre détective Sherlock Holmes ?", o: ["John", "Sherlock", "Mycroft", "James"], c: 1 },
+                { q: "Quel pays est traversé par le Nil sur la plus grande partie de son parcours ?", o: ["Soudan", "Égypte", "Éthiopie", "Ouganda"], c: 1 },
+                { q: "Quel est l'animal terrestre le plus lourd ?", o: ["L'éléphant d'Afrique", "L'hippopotame", "Le rhinocéros", "La girafe"], c: 0 },
+                { q: "Combien de couleurs composent l'arc-en-ciel traditionnel ?", o: ["5", "6", "7", "8"], c: 2 },
+                { q: "Quelle est la capitale de l'Argentine ?", o: ["Buenos Aires", "Santiago", "Lima", "Bogota"], c: 0 },
+                { q: "Quel est le plat national traditionnel du Sénégal ?", o: ["Le couscous", "Letie", "Le thieboudienne", "Le yassa"], c: 2 },
+                { q: "Quel est le symbole chimique du sodium ?", o: ["S", "So", "Na", "Nd"], c: 2 },
+                { q: "Quelle est la principale matière première du chocolat ?", o: ["La vanille", "Le cacao", "Le sucre", "Le café"], c: 1 },
+                { q: "Quel continent abrite le désert du Kalahari ?", o: ["L'Asie", "L'Australie", "L'Afrique", "L'Amérique du Sud"], c: 2 },
+                { q: "Quel est le livre le plus vendu au monde après la Bible ?", o: ["Le Coran", "Don Quichotte", "Le Petit Prince", "Le Seigneur des Anneaux"], c: 1 },
+                { q: "Quelle est la capitale du Portugal ?", o: ["Porto", "Lisbonne", "Coimbra", "Faro"], c: 1 },
+                { q: "Quel est l'état de l'eau à 0 degré Celsius (à pression normale) ?", o: ["Gazeux", "Liquide", "Solide", "Plasma"], c: 2 },
+                { q: "Quel est le nom de la galaxie qui contient notre système solaire ?", o: ["Andromède", "La Voie lactée", "Sombrero", "Le Triangle"], c: 1 },
+                { q: "Quel pays a pour capitale Bogota ?", o: ["Colombie", "Vénézuela", "Pérou", "Chili"], c: 0 },
+                { q: "Quel est le sport le plus populaire au monde ?", o: ["Le basketball", "Le cricket", "Le football", "Le tennis"], c: 2 },
+                { q: "Quelle est la langue officielle du Brésil ?", o: ["L'espagnol", "Le portugais", "L'anglais", "Le français"], c: 1 },
+                { q: "Combien de branches a une étoile de mer classique ?", o: ["4", "5", "6", "8"], c: 1 },
+                { q: "Quel est le premier mois de l'année civile ?", o: ["Mars", "Janvier", "Février", "Septembre"], c: 1 },
+                { q: "Quelle est la couleur du cheval blanc d'Henri IV ?", o: ["Noir", "Blanc", "Gris", "Marron"], c: 1 }
+            ],
+            histoire: [
+                { q: "Qui a peint La Joconde ?", o: ["Vincent van Gogh", "Pablo Picasso", "Léonard de Vinci", "Claude Monet"], c: 2 },
+                { q: "Quel empereur romain a été assassiné aux ides de mars ?", o: ["Néron", "Jules César", "Auguste", "Caligula"], c: 1 },
+                { q: "En quelle année a débuté la Première Guerre mondiale ?", o: ["1912", "1914", "1939", "1945"], c: 1 },
+                { q: "Quelle est la capitale de l'Australie ?", o: ["Sydney", "Melbourne", "Canberra", "Perth"], c: 2 },
+                { q: "Quel explorateur a découvert l'Amérique en 1492 ?", o: ["Vasco de Gama", "Christophe Colomb", "Magellan", "Amerigo Vespucci"], c: 1 },
+                { q: "Qui fut le premier président de l'Afrique du Sud post-apartheid ?", o: ["Nelson Mandela", "Thabo Mbeki", "Desmond Tutu", "F. W. de Klerk"], c: 0 },
+                { q: "Dans quelle ville se trouve la célèbre Tour Eiffel ?", o: ["Londres", "Paris", "Berlin", "Madrid"], c: 1 },
+                { q: "Quelle civilisation a construit les pyramides de Gizeh ?", o: ["Les Mayas", "Les Grecs", "Les Égyptiens", "Les Romains"], c: 2 },
+                { q: "En quelle année l'homme a-t-il marché sur la Lune pour la première fois ?", o: ["1965", "1969", "1971", "1973"], c: 1 },
+                { q: "Quel pays a offert la Statue de la Liberté aux États-Unis ?", o: ["L'Angleterre", "L'Espagne", "La France", "L'Italie"], c: 2 },
+                { q: "Qui était le leader de l'URSS pendant la Seconde Guerre mondiale ?", o: ["Lenine", "Staline", "Kroutchev", "Gorbatchev"], c: 1 },
+                { q: "Quel roi de France a été surnommé le Roi Soleil ?", o: ["Louis XIV", "Louis XV", "Louis XVI", "Henri IV"], c: 0 },
+                { q: "En quelle année a eu lieu la Révolution française ?", o: ["1789", "1815", "1848", "1914"], c: 0 },
+                { q: "Quel mur séparait Berlin de 1961 à 1989 ?", o: ["Le mur de fer", "Le mur de Berlin", "Le mur d'Hadrien", "Le mur de Chine"], c: 1 },
+                { q: "Quelle reine d'Égypte antique a séduit Jules César et Marc Antoine ?", o: ["Néfertiti", "Cléopâtre", "Hatchepsout", "Ankhesenamon"], c: 1 },
+                { q: "Quel pays a subi les premiers bombardements atomiques en 1945 ?", o: ["L'Allemagne", "Le Japon", "L'Italie", "La Chine"], c: 1 },
+                { q: "Quel empire a construit le Colisée à Rome ?", o: ["L'Empire grec", "L'Empire romain", "L'Empire ottoman", "L'Empire perse"], c: 1 },
+                { q: "Qui a écrit le roman 'Les Misérables' ?", o: ["Émile Zola", "Victor Hugo", "Albert Camus", "Gustave Flaubert"], c: 1 },
+                { q: "Quel événement marque le début de la Seconde Guerre mondiale ?", o: ["L'attentat de Sarajevo", "L'invasion de la Pologne", "La chute de la Bourse", "Le débarquement de Normandie"], c: 1 },
+                { q: "Quel explorateur portugais a atteint l'Inde par la mer en 1498 ?", o: ["Vasco de Gama", "Fernand de Magellan", "Bartolomeu Dias", "Christophe Colomb"], c: 0 },
+                { q: "Quel pharaon a vu sa tombe découverte intacte en 1922 par Howard Carter ?", o: ["Ramsès II", "Toutânkhamon", "Akhenaton", "Séthi Ier"], c: 1 },
+                { q: "Dans quel pays s'est déroulée la bataille de Waterloo en 1815 ?", o: ["La France", "La Belgique", "L'Allemagne", "Le Royaume-Uni"], c: 1 },
+                { q: "Quel dirigeant a prononcé le célèbre discours 'I have a dream' ?", o: ["Malcolm X", "Martin Luther King", "Nelson Mandela", "Barack Obama"], c: 1 },
+                { q: "Quel pays a colonisé le Maroc au début du 20ème siècle (protectorat) ?", o: ["L'Espagne et la France", "L'Angleterre seulement", "L'Italie", "L'Allemagne"], c: 0 },
+                { q: "Quel peuple mésoaméricain a développé le calendrier maya ?", o: ["Les Aztèques", "Les Mayas", "Les Incas", "Les Toltèques"], c: 1 },
+                { q: "Qui fut le premier empereur des Romains ?", o: ["Jules César", "Auguste", "Tibère", "Néron"], c: 1 },
+                { q: "Quelle guerre a opposé le Nord et le Sud des États-Unis entre 1861 et 1865 ?", o: ["La guerre d'Indépendance", "La guerre de Sécession", "La guerre du Vietnam", "La guerre froide"], c: 1 },
+                { q: "Quel grand empire méditerranéen a été détruit par Rome lors des guerres puniques ?", o: ["Carthage", "Athènes", "Sparte", "Babylone"], c: 0 },
+                { q: "En quelle année l'Afrique du Sud a-t-elle aboli l'apartheid ?", o: ["1980", "1990", "1994", "2000"], c: 1 },
+                { q: "Quel penseur chinois est l'auteur des 'Entretiens' ?", o: ["Lao-Tseu", "Confucius", "Sun Tzu", "Bouddha"], c: 1 },
+                { q: "Quel pays a été dirigé par Fidel Castro à partir de 1959 ?", o: ["Le Mexique", "Le Chili", "Cuba", "L'Argentine"], c: 2 },
+                { q: "Quel traité met fin officiellement à la Première Guerre mondiale en 1919 ?", o: ["Le traité de Versailles", "Le traité de Paris", "Le traité de Vienne", "Le traité de Tordesillas"], c: 0 },
+                { q: "Qui a inventé l'imprimerie à caractères mobiles en Occident vers 1450 ?", o: ["Leonardo da Vinci", "Johannes Gutenberg", "Galilée", "Isaac Newton"], c: 1 },
+                { q: "Quelle ville était la capitale de l'Empire byzantin ?", o: ["Rome", "Constantinople", "Athènes", "Alexandrie"], c: 1 },
+                { q: "Quel explorateur a réalisé la première circumnavigation de la Terre ?", o: ["Christophe Colomb", "Fernand de Magellan", "Marco Polo", "James Cook"], c: 1 },
+                { q: "Quel pays est le berceau de la démocratie antique (Athènes) ?", o: ["L'Italie", "La Grèce", "L'Égypte", "La Perse"], c: 1 },
+                { q: "Quel célèbre mathématicien et physicien grec s'est écrié 'Eureka' ?", o: ["Pythagore", "Archimède", "Socrate", "Platon"], c: 1 },
+                { q: "Quelle révolution a transformé la Grande-Bretagne du 18e siècle sur le plan technique ?", o: ["La révolution verte", "La révolution industrielle", "La révolution culturelle", "La révolution numérique"], c: 1 },
+                { q: "Quel empereur a codifié le droit romain dans le Corpus juris civilis ?", o: ["Justinien", "Auguste", "Constantin", "Trajan"], c: 0 },
+                { q: "Quelle île a servi de lieu d'exil final à Napoléon Bonaparte à partir de 1815 ?", o: ["L'île d'Elbe", "Sainte-Hélène", "La Corse", "La Sardaigne"], c: 1 },
+                { q: "Quel pays a connu la révolution bolchevique en octobre 1917 ?", o: ["La France", "L'Allemagne", "La Russie", "La Chine"], c: 2 },
+                { q: "Quel dieu de la mythologie grecque règne sur les enfers ?", o: ["Zeus", "Poséidon", "Hadès", "Arès"], c: 2 },
+                { q: "Quel pays européen a été le principal initiateur de la traite négrière transatlantique au début ?", o: ["Le Portugal et l'Espagne", "La Suède", "La Suisse", "L'Autriche"], c: 0 },
+                { q: "Qui était le chef de l'État français (résistance) depuis Londres pendant la Seconde Guerre mondiale ?", o: ["Philippe Pétain", "Charles de Gaulle", "Georges Clemenceau", "Jean Moulin"], c: 1 },
+                { q: "Quel architecte a conçu la pyramide du Louvre ?", o: ["I. M. Pei", "Le Corbusier", "Norman Foster", "Jean Nouvel"], c: 0 },
+                { q: "Quel pays a obtenu son indépendance de la France en 1962 après une longue guerre ?", o: ["Le Maroc", "La Tunisie", "L'Algérie", "Le Sénégal"], c: 2 },
+                { q: "Quel philosophe grec a été condamné à boire la ciguë ?", o: ["Platon", "Aristote", "Socrate", "Épicure"], c: 2 },
+                { q: "Quel est le plus ancien des sept merveilles du monde antique encore debout ?", o: ["Le phare d'Alexandrie", "Les jardins suspendus", "La grande pyramide de Gizeh", "Le colosse de Rhodes"], c: 2 },
+                { q: "En quelle année l'ONU (Organisation des Nations Unies) a-t-elle été fondée ?", o: ["1919", "1945", "1950", "1955"], c: 1 },
+                { q: "Quel peuple scandinave a mené des raids en Europe du 8e au 11e siècle ?", o: ["Les Vandales", "Les Vikings", "Les Huns", "Les Goths"], c: 1 }
+            ],
+            sciences: [
+                { q: "Quelle est la planète la plus proche du Soleil ?", o: ["Vénus", "Mercure", "Mars", "Jupiter"], c: 1 },
+                { q: "Quel gaz absorbe majoritairement les UV dans l'atmosphère terrestre ?", o: ["Oxygène", "Azote", "Ozone", "Dioxyde de carbone"], c: 2 },
+                { q: "Quelle est la vitesse de la lumière dans le vide (environ) ?", o: ["300 000 km/s", "150 000 km/s", "1 000 km/s", "3 000 km/s"], c: 0 },
+                { q: "Quel est l'organe humain le plus grand ?", o: ["Le cœur", "Le foie", "La peau", "Les poumons"], c: 2 },
+                { q: "Qui a formulé la théorie de la relativité restreinte ?", o: ["Isaac Newton", "Albert Einstein", "Galilée", "Nikola Tesla"], c: 1 },
+                { q: "Quel est le symbole chimique du fer ?", o: ["Fe", "Ir", "F", "Fr"], c: 0 },
+                { q: "Combien de paires de chromosomes possède l'être humain en Standard ?", o: ["21", "23", "25", "46"], c: 1 },
+                { q: "Quelle science étudie les séismes et les tremblements de terre ?", o: ["La météorologie", "La sismologie", "La volcanologie", "L'astronomie"], c: 1 },
+                { q: "Quelle est la principale source d'énergie du système solaire ?", o: ["La Terre", "Jupiter", "Le Soleil", "La Lune"], c: 2 },
+                { q: "Quel est le gaz le plus abondant dans l'atmosphère de la Terre ?", o: ["L'oxygène", "Le dioxyde de carbone", "L'azote", "L'hydrogène"], c: 2 },
+                { q: "Quel physicien a découvert la loi de la gravitation universelle ?", o: ["Albert Einstein", "Isaac Newton", "Galilée", "Blaise Pascal"], c: 1 },
+                { q: "Quel est le nom de la plus grande planète du système solaire ?", o: ["Saturne", "Jupiter", "Neptune", "Uranus"], c: 1 },
+                { q: "Quelle est la formule chimique du sel de table ?", o: ["H2O", "NaCl", "CO2", "CH4"], c: 1 },
+                { q: "Comment appelle-t-on les animaux qui se nourrissent à la fois de plantes et de viande ?", o: ["Herbivores", "Carnivores", "Omnivores", "Insectivores"], c: 2 },
+                { q: "Quel scientifique a découvert la pénicilline ?", o: ["Louis Pasteur", "Alexander Fleming", "Marie Curie", "Robert Koch"], c: 1 },
+                { q: "Quelle est l'unité de mesure de l'intensité d'un courant électrique ?", o: ["Le Volt", "L'Ohm", "L'Ampère", "Le Watt"], c: 2 },
+                { q: "Quel est l'élément chimique le plus léger de l'univers ?", o: ["L'hélium", "L'hydrogène", "Le lithium", "Le carbone"], c: 1 },
+                { q: "Quel type de cellule sanguine transporte l'oxygène dans le corps ?", o: ["Les globules blancs", "Les globules rouges", "Les plaquettes", "Les neurones"], c: 1 },
+                { q: "Quelle est la température de fusion de la glace en degrés Celsius ?", o: ["-10°C", "0°C", "50°C", "100°C"], c: 1 },
+                { q: "Quel est le nom de notre galaxie voisine la plus proche (spirale majeure) ?", o: ["Andromède", "Sombrero", "Le Grand Nuage de Magellan", "Messier 87"], c: 0 },
+                { q: "Quelle est la valeur de la constante Pi (approximative à 2 décimales) ?", o: ["3.14", "2.71", "1.41", "1.73"], c: 0 },
+                { q: "Quel gaz est produit par la combustion du charbon et du pétrole et contribue au réchauffement ?", o: ["L'oxygène", "Le dioxyde de carbone", "L'hélium", "L'azote"], c: 1 },
+                { q: "Quel est le métal liquide à température ambiante ?", o: ["Le plomb", "Le mercure", "L'or", "Le fer"], c: 1 },
+                { q: "Quelle est la science qui étudie les insectes ?", o: ["L'ornithologie", "L'entomologie", "L'ichtyologie", "L'herpétologie"], c: 1 },
+                { q: "Quel est le plus grand os du corps humain ?", o: ["L'humérus", "Le fémur", "Le tibia", "Le radius"], c: 1 },
+                { q: "Quelle est la source principale de vitamine D pour l'humain ?", o: ["Les agrumes", "Le soleil", "Le poisson", "Les produits laitiers"], c: 1 },
+                { q: "Quel est l'âge estimé de l'univers (environ) ?", o: ["4,5 milliards d'années", "13,8 milliards d'années", "100 milliards d'années", "500 millions d'années"], c: 1 },
+                { q: "Quel physicien a proposé le principe d'incertitude en mécanique quantique ?", o: ["Niels Bohr", "Werner Heisenberg", "Erwin Schrödinger", "Max Planck"], c: 1 },
+                { q: "Quelle est la vitesse du son dans l'air (environ à 20°C) ?", o: ["343 m/s", "1500 m/s", "300 000 m/s", "10 m/s"], c: 0 },
+                { q: "Quel est l'organe du corps humain responsable de la filtration du sang et de la production d'urine ?", o: ["Le foie", "Le cœur", "Les reins", "La rate"], c: 2 },
+                { q: "Quel est le symbole chimique du potassium ?", o: ["P", "K", "Pt", "Po"], c: 1 },
+                { q: "Comment appelle-t-on une étoile qui a fini par s'effondrer gravitationnellement sur elle-même avec une gravité infinie ?", o: ["Une supernova", "Un trou noir", "Une naine blanche", "Un pulsar"], c: 1 },
+                { q: "Quelle est la structure en double hélice découverte par Watson et Crick ?", o: ["Les protéines", "L'ADN", "Les lipides", "L'ARN messager"], c: 1 },
+                { q: "Quel est le nom de la force qui attire les objets vers le centre de la Terre ?", o: ["Le magnétisme", "La gravité", "La friction", "La force centrifuge"], c: 1 },
+                { q: "Quelle est l'unité de mesure de la pression atmosphérique ou physique ?", o: ["Le Pascal", "Le Joule", "Le Newton", "Le Hertz"], c: 0 },
+                { q: "Quel gaz inerte est souvent utilisé pour remplir les enseignes lumineuses colorées ?", o: ["L'hélium", "Le néon", "L'argon", "Le krypton"], c: 1 },
+                { q: "Quel scientifique a développé la théorie de l'évolution par sélection naturelle ?", o: ["Gregor Mendel", "Charles Darwin", "Jean-Baptiste Lamarck", "Louis Pasteur"], c: 1 },
+                { q: "Quel est l'élément chimique le plus abondant dans la croûte terrestre ?", o: ["Le fer", "Le silicium", "L'oxygène", "L'aluminium"], c: 2 },
+                { q: "Quel est l'instrument utilisé pour mesurer la pression atmosphérique ?", o: ["Le thermomètre", "Le baromètre", "L'anémomètre", "L'hygromètre"], c: 1 },
+                { q: "Quel est le nom de la première femme à avoir reçu un prix Nobel ?", o: ["Rosalind Franklin", "Marie Curie", "Ada Lovelace", "Irene Joliot-Curie"], c: 1 },
+                { q: "Quel est l'acide présent dans l'estomac qui aide à la digestion ?", o: ["L'acide sulfurique", "L'acide chlorhydrique", "L'acide acétique", "L'acide nitrique"], c: 1 },
+                { q: "Quelle est la planète la plus chaude du système solaire à cause de son effet de serre intense ?", o: ["Mercure", "Vénus", "Mars", "Jupiter"], c: 1 },
+                { q: "Quel est le type de liaison chimique où des électrons sont partagés entre atomes ?", o: ["Liaison ionique", "Liaison covalente", "Liaison métallique", "Liaison hydrogène"], c: 1 },
+                { q: "Quel est le nom de la particule élémentaire porteuse d'une charge électrique négative ?", o: ["Le proton", "Le neutron", "L'électron", "Le positron"], c: 2 },
+                { q: "Quelle science étudie les fossiles des organismes ayant vécu sur Terre ?", o: ["L'archéologie", "La paléontologie", "L'anthropologie", "La géologie"], c: 1 },
+                { q: "Quel est le nom du processus par lequel une plante produit sa nourriture grâce à la lumière ?", o: ["La respiration", "La photosynthèse", "La fermentation", "La transpiration"], c: 1 },
+                { q: "Quel est le symbole chimique de l'or ?", o: ["Ag", "Au", "Pb", "Cu"], c: 1 },
+                { q: "Quel est le plus grand satellite naturel (lune) de Saturne ?", o: ["Ganymède", "Titan", "Io", "Europa"], c: 1 },
+                { q: "Quel est l'élément de base de la chimie organique ?", o: ["L'oxygène", "Le carbone", "L'azote", "L'hydrogène"], c: 1 },
+                { q: "Quel scientifique est célèbre pour ses lois sur le mouvement des planètes ?", o: ["Johannes Kepler", "Galilée", "Copernic", "Ptolémée"], c: 0 }
+            ],
+            divertissement: [
+                { q: "Quel réalisateur a dirigé la trilogie du Seigneur des Anneaux ?", o: ["Steven Spielberg", "Peter Jackson", "James Cameron", "Christopher Nolan"], c: 1 },
+                { q: "Quel groupe de musique britannique a chanté 'Hey Jude' ?", o: ["The Rolling Stones", "The Beatles", "Queen", "Pink Floyd"], c: 1 },
+                { q: "Quel est le nom du studio d'animation à l'origine du film Le Voyage de Chihiro ?", o: ["Pixar", "DreamWorks", "Studio Ghibli", "Disney"], c: 2 },
+                { q: "Dans l'univers Harry Potter, à quelle maison appartient Draco Malfoy ?", o: ["Gryffondor", "Serpentard", "Poufsouffle", "Serdaigle"], c: 1 },
+                { q: "Quel jeu vidéo populaire met en scène des blocs et un monde cubique infini ?", o: ["Minecraft", "Fortnite", "Tetris", "Roblox"], c: 0 },
+                { q: "Quel acteur incarne Iron Man dans l'univers cinématographique Marvel ?", o: ["Chris Hemsworth", "Chris Evans", "Robert Downey Jr.", "Mark Ruffalo"], c: 2 },
+                { q: "Quel film a remporté l'Oscar du meilleur film en 1998 avec Leonardo DiCaprio ?", o: ["Gladiator", "Titanic", "Avatar", "Jurassic Park"], c: 1 },
+                { q: "Quelle plateforme de streaming produit la série Stranger Things ?", o: ["HBO", "Netflix", "Amazon Prime", "Disney+"], c: 1 },
+                { q: "Quel super-héros a pour alter ego Bruce Wayne ?", o: ["Superman", "Spider-Man", "Batman", "Iron Man"], c: 2 },
+                { q: "Quel est le nom du plombier moustachu le plus célèbre de Nintendo ?", o: ["Luigi", "Mario", "Yoshi", "Toad"], c: 1 },
+                { q: "Quel réalisateur a mis en scène le film Inception et Interstellar ?", o: ["Christopher Nolan", "Quentin Tarantino", "Martin Scorsese", "David Fincher"], c: 0 },
+                { q: "Quel groupe a interprété le tube légendaire 'Bohemian Rhapsody' ?", o: ["The Beatles", "Queen", "Led Zeppelin", "AC/DC"], c: 1 },
+                { q: "Quel est le nom du pirate héros de la série manga One Piece ?", o: ["Naruto Uzumaki", "Monkey D. Luffy", "Son Goku", "Ichigo Kurosaki"], c: 1 },
+                { q: "Dans quelle ville se déroule principalement l'action de la série The Simpsons ?", o: ["New York", "Springfield", "Los Angeles", "Chicago"], c: 1 },
+                { q: "Quel acteur joue le rôle principal de Jack Sparrow dans Pirates des Caraïbes ?", o: ["Orlando Bloom", "Johnny Depp", "Brad Pitt", "Tom Cruise"], c: 1 },
+                { q: "Quel est le nom de la princesse à sauver dans les premiers jeux Super Mario ?", o: ["Princess Zelda", "Princess Peach", "Princess Daisy", "Rosalina"], c: 1 },
+                { q: "Quel film d'animation de Disney met en scène un lionceau nommé Simba ?", o: ["Bambi", "Le Roi Lion", "Tarzan", "Frère des Ours"], c: 1 },
+                { q: "Quel artiste musical est surnommé le 'King of Pop' ?", o: ["Elvis Presley", "Michael Jackson", "Prince", "Freddie Mercury"], c: 1 },
+                { q: "Quel est le nom de la célèbre école de sorcellerie dans Harry Potter ?", o: ["Beauxbâtons", "Poudlard", "Durmstrang", "Ilvermorny"], c: 1 },
+                { q: "Quel jeu vidéo de bataille royale a popularisé le genre développé par Epic Games ?", o: ["PUBG", "Fortnite", "Apex Legends", "Call of Duty"], c: 1 },
+                { q: "Quel réalisateur est connu pour ses films cultes Pulp Fiction et Kill Bill ?", o: ["Quentin Tarantino", "Steven Spielberg", "Ridley Scott", "Tim Burton"], c: 0 },
+                { q: "Quel super-vilain claque des doigts pour effacer la moitié de l'univers dans Marvel ?", o: ["Loki", "Ultron", "Thanos", "Kang"], c: 2 },
+                { q: "Quel est le nom de la série fantastique de HBO adaptée des romans de George R. R. Martin ?", o: ["The Witcher", "Game of Thrones", "Le Seigneur des Anneaux", "Vikings"], c: 1 },
+                { q: "Quel groupe de K-pop a explosé les records mondiaux avec le titre 'Dynamite' ?", o: ["EXO", "Blackpink", "BTS", "Stray Kids"], c: 2 },
+                { q: "Quel personnage de jeux vidéo est un hérisson bleu très rapide ?", o: ["Mario", "Crash Bandicoot", "Sonic", "Pac-Man"], c: 2 },
+                { q: "Quel acteur incarne le personnage de Harry Potter au cinéma ?", o: ["Rupert Grint", "Daniel Radcliffe", "Tom Felton", "Robert Pattinson"], c: 1 },
+                { q: "Dans l'univers de Star Wars, quel est le nom du père de Luke Skywalker ?", o: ["Obi-Wan Kenobi", "Han Solo", "Dark Vador (Anakin)", "Palpatine"], c: 2 },
+                { q: "Quel réalisateur est à l'origine du film culte Jurassic Park (1993) ?", o: ["James Cameron", "Steven Spielberg", "George Lucas", "J.J. Abrams"], c: 1 },
+                { q: "Quelle chanteuse américaine est l'interprète de l'album '1989' et de la tournée Eras Tour ?", o: ["Adele", "Taylor Swift", "Beyoncé", "Billie Eilish"], c: 1 },
+                { q: "Quel est le nom de la ville fictive où vit Batman ?", o: ["Metropolis", "Gotham City", "Star City", "Central City"], c: 1 },
+                { q: "Quel film de James Cameron est le premier à avoir dépassé les 2 milliards de dollars de recettes ?", o: ["Titanic", "Avatar", "Terminator 2", "Aliens"], c: 1 },
+                { q: "Quel détective célèbre a été créé par l'écrivain Arthur Conan Doyle ?", o: ["Hercule Poirot", "Sherlock Holmes", "Miss Marple", "Arsène Lupin"], c: 1 },
+                { q: "Quel jeu vidéo en monde ouvert se déroule dans la ville fictive de Los Santos (GTA V) ?", o: ["Cyberpunk 2077", "Grand Theft Auto", "Red Dead Redemption", "Watch Dogs"], c: 1 },
+                { q: "Quel réalisateur japonais a créé le chef-d'œuvre d'animation 'Mon Voisin Totoro' ?", o: ["Makoto Shinkai", "Hayao Miyazaki", "Mamoru Hosoda", "Satoshi Kon"], c: 1 },
+                { q: "Quel groupe de rock légendaire a pour logo une langue tirée ?", o: ["The Beatles", "The Rolling Stones", "AC/DC", "Pink Floyd"], c: 1 },
+                { q: "Quel est le prénom du détective belge créé par Agatha Christie ?", o: ["Jules", "Hercule", "Auguste", "Nestor"], c: 1 },
+                { q: "Dans quelle saga cinématographique trouve-t-on le personnage de Katniss Everdeen ?", o: ["Divergente", "Le Labyrinthe", "Hunger Games", "Twilight"], c: 2 },
+                { q: "Quel rappeur américain a produit l'album à succès 'God's Plan' ?", o: ["Kendrick Lamar", "Drake", "J. Cole", "Kanye West"], c: 1 },
+                { q: "Quel est le nom du super-ordinateur ennemi dans la saga Matrix ?", o: ["Skynet", "Les Machines / Matrice", "HAL 9000", "Ultron"], c: 1 },
+                { q: "Quel jeu vidéo de rôle (RPG) fantastique de CD Projekt Red met en scène Geralt de Riv ?", o: ["Skyrim", "The Witcher 3", "Elden Ring", "Dark Souls"], c: 1 },
+                { q: "Quel acteur joue le Joker dans le film The Dark Knight (2008) dirigé par Christopher Nolan ?", o: ["Joaquin Phoenix", "Heath Ledger", "Jared Leto", "Jack Nicholson"], c: 1 },
+                { q: "Quel créateur est à l'origine du manga Dragon Ball ?", o: ["Eiichiro Oda", "Akira Toriyama", "Masashi Kishimoto", "Tite Kubo"], c: 1 },
+                { q: "Quel film de science-fiction de 1999 pose la question de la pilule rouge et de la pilule bleue ?", o: ["Inception", "Matrix", "Interstellar", "Blade Runner"], c: 1 },
+                { q: "Quel studio d'animation est célèbre pour ses films Toy Story, Les Indestructibles et Là-haut ?", o: ["DreamWorks", "Pixar", "Illumination", "Disney Animation"], c: 1 },
+                { q: "Quel est le nom du célèbre détective gentleman créé par Maurice Leblanc ?", o: ["Sherlock Holmes", "Arsène Lupin", "Columbo", "Maigret"], c: 1 },
+                { q: "Quelle série télévisée met en scène un professeur de chimie, Walter White, qui devient trafiquant ?", o: ["The Wire", "Breaking Bad", "Better Call Saul", "Narcos"], c: 1 },
+                { q: "Quel groupe de heavy metal a composé la chanson 'Master of Puppets' ?", o: ["Iron Maiden", "Metallica", "Black Sabbath", "Megadeth"], c: 1 },
+                { q: "Quel acteur interprète le personnage de Jack Dawson dans Titanic ?", o: ["Brad Pitt", "Leonardo DiCaprio", "Johnny Depp", "Tom Cruise"], c: 1 },
+                { q: "Quel est le nom du royaume sous-marin fictif dans l'univers de DC Comics (Aquaman) ?", o: ["Pôle Nord", "Atlantide", "Asgard", "Themyscira"], c: 1 },
+                { q: "Quel jeu vidéo de football est édité chaque année par EA Sports ?", o: ["PES / eFootball", "EA Sports FC / FIFA", "Rocket League", "Football Manager"], c: 1 }
+            ]
+        };
+
+        let activeCategory = '';
+        let currentQuestions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+
+        function shuffleArray(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function startQuiz(category) {
+            activeCategory = category;
+            score = 0;
+            currentQuestionIndex = 0;
+
+            const rawPool = database[category];
+            const shuffledPool = shuffleArray(rawPool);
+            
+            // Sélectionne 20 questions aléatoires parmi les 50 disponibles dans la catégorie
+            const selectedPool = shuffledPool.slice(0, 20);
+
+            currentQuestions = selectedPool.map(item => {
+                const optionsWithMeta = item.o.map((opt, idx) => ({ text: opt, isCorrect: idx === item.c }));
+                const shuffledOpts = shuffleArray(optionsWithMeta);
+                return {
+                    question: item.q,
+                    options: shuffledOpts.map(o => o.text),
+                    correct: shuffledOpts.findIndex(o => o.isCorrect)
+                };
+            });
+
+            document.getElementById('category-badge').textContent = category.toUpperCase();
+            showScreen('quiz-screen');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const nextBtn = document.getElementById('next-btn');
+            nextBtn.style.display = 'none';
+
+            const q = currentQuestions[currentQuestionIndex];
+            document.getElementById('question-number').textContent = `Question ${currentQuestionIndex + 1}/${currentQuestions.length}`;
+            document.getElementById('score-tracker').textContent = `Score : ${score}`;
+            document.getElementById('question-text').textContent = q.question;
+
+            const optionsList = document.getElementById('options-list');
+            optionsList.innerHTML = '';
+
+            q.options.forEach((optText, index) => {
+                const btn = document.createElement('button');
+                btn.classList.add('option-btn');
+                btn.textContent = optText;
+                btn.onclick = () => selectOption(index, btn);
+                optionsList.appendChild(btn);
+            });
+        }
+
+        function selectOption(selectedIndex, selectedBtn) {
+            const q = currentQuestions[currentQuestionIndex];
+            const allBtns = document.querySelectorAll('.option-btn');
+
+            allBtns.forEach(btn => btn.disabled = true);
+
+            if (selectedIndex === q.correct) {
+                selectedBtn.classList.add('correct');
+                score++;
+                document.getElementById('score-tracker').textContent = `Score : ${score}`;
+            } else {
+                selectedBtn.classList.add('incorrect');
+                allBtns[q.correct].classList.add('correct');
+            }
+
+            const nextBtn = document.getElementById('next-btn');
+            nextBtn.style.display = 'block';
+            nextBtn.onclick = () => {
+                currentQuestionIndex++;
+                if (currentQuestionIndex < currentQuestions.length) {
+                    loadQuestion();
+                } else {
+                    showResults();
+                }
+            };
+        }
+
+        function showResults() {
+            document.getElementById('final-score-text').textContent = `Votre score final est de ${score} sur ${currentQuestions.length} (${Math.round((score/currentQuestions.length)*100)}%)`;
+            showScreen('result-screen');
+        }
+
+        function showCategorySelect() {
+            showScreen('category-screen');
+        }
+
+        function restartCategory() {
+            startQuiz(activeCategory);
+        }
+    </script>
+</body>
+</html>
